@@ -413,110 +413,50 @@ async function submitReview(productId) {
         alert('Server error');
     }
 }
-// Cloudinary Config
-const cloudName = 'dksjpqzqp';
-const uploadPreset = 'frontend_upload';
-
-const newSuitImages = document.getElementById('newSuitImages');
-const imagePreview = document.getElementById('imagePreview');
-
-if (newSuitImages instanceof HTMLInputElement) {
-    newSuitImages.addEventListener('change', () => {
-        const files = Array.from(newSuitImages.files);
-        imagePreview.innerHTML = '';
-        uploadedSuitImages = [];
-
-        files.forEach(file => {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('upload_preset', uploadPreset);
-
-            fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                const imgUrl = data.secure_url;
-                uploadedSuitImages.push(imgUrl);
-
-                const img = document.createElement('img');
-                img.src = imgUrl;
-                img.style.width = '150px';
-                img.style.margin = '5px';
-                imagePreview.appendChild(img);
-
-                // Save in localStorage so it's available after reload
-                localStorage.setItem('uploadedSuitImages', JSON.stringify(uploadedSuitImages));
-            })
-            .catch(err => {
-                console.error('Upload failed:', err);
-                alert('Image upload failed!');
-            });
-        });
-    });
-}
-
-// On page load, show previously uploaded images
-window.addEventListener('load', () => {
-    const savedImages = JSON.parse(localStorage.getItem('uploadedSuitImages') || '[]');
-    savedImages.forEach(url => {
-        const img = document.createElement('img');
-        img.src = url;
-        img.style.width = '150px';
-        img.style.margin = '5px';
-        imagePreview.appendChild(img);
-    });
-});
-
-// =================== Submit New Suit ===================
-function submitNewSuit() {
+async function submitNewSuit() {
+    if (!isAdmin()) {
+        alert('Admin required');
+        return;
+    }
     const nameEl = document.getElementById('newSuitName');
     const priceEl = document.getElementById('newSuitPrice');
     const descEl = document.getElementById('newSuitDesc');
-    if (!(nameEl instanceof HTMLInputElement) || !(priceEl instanceof HTMLInputElement) || !(descEl instanceof HTMLInputElement)) return;
+    const filesEl = document.getElementById('newSuitImages');
+    if (!(nameEl instanceof HTMLInputElement) || !(priceEl instanceof HTMLInputElement) || !(descEl instanceof HTMLInputElement) || !(filesEl instanceof HTMLInputElement)) return;
     const name = nameEl.value.trim();
-    const price = priceEl.value.trim();
+    const price = parseFloat(priceEl.value);
     const desc = descEl.value.trim();
-    const images = uploadedSuitImages || [];
-
-    if(!name || !price || !desc || images.length === 0) {
-        alert('Please fill all fields and upload at least one image!');
+    if (!name || isNaN(price)) {
+        alert('Enter valid name and price');
         return;
     }
-
-    // Example: Add new suit to console (or your frontend array)
-    const newSuit = {
-        name,
-        price,
-        desc,
-        images
-    };
-    console.log('New Suit Added:', newSuit);
-
-    // Clear form
-    const newSuitNameEl = document.getElementById('newSuitName');
-    const newSuitPriceEl = document.getElementById('newSuitPrice');
-    const newSuitDescEl = document.getElementById('newSuitDesc');
-    const newSuitImagesEl = document.getElementById('newSuitImages');
-    
-    if (newSuitNameEl instanceof HTMLInputElement) newSuitNameEl.value = '';
-    if (newSuitPriceEl instanceof HTMLInputElement) newSuitPriceEl.value = '';
-    if (newSuitDescEl instanceof HTMLInputElement) newSuitDescEl.value = '';
-    if (newSuitImagesEl instanceof HTMLInputElement) newSuitImagesEl.value = '';
-    
-    imagePreview.innerHTML = '';
-    uploadedSuitImages = [];
-
-    alert('Suit added successfully! (Check console for object)');
-}
-
-// =================== Optional: Show/Hide Sections ===================
-function showSection(sectionId) {
-    const sections = document.querySelectorAll('section');
-    sections.forEach(sec => sec.style.display = 'none');
-    const target = document.getElementById(sectionId);
-    if(target) target.style.display = 'block';
+    const fd = new FormData();
+    fd.append('name', name);
+    fd.append('price', String(price));
+    fd.append('desc', desc);
+    if (filesEl.files && filesEl.files.length > 0) {
+        for (let i = 0; i < filesEl.files.length; i++) {
+            fd.append('images', filesEl.files[i]);
+        }
+    }
+    try {
+        const res = await fetch(`${API_URL}/products`, { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+            alert('Product added');
+            nameEl.value = '';
+            priceEl.value = '';
+            descEl.value = '';
+            if (filesEl) filesEl.value = '';
+            await fetchProducts();
+            showSection('manageSection');
+            showManageSection();
+        } else {
+            alert(data.error || 'Add failed');
+        }
+    } catch (e) {
+        alert('Server error');
+    }
 }
 
 function showManageSection() {
