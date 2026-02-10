@@ -143,15 +143,27 @@
     </section>
 
     <section id="uploadSection" style="display:none;">
-        <div id="uploadForm">
-            <h2>Add New Suit</h2>
-            <input type="text" id="newSuitName" placeholder="Suit Name">
-            <input type="number" id="newSuitPrice" placeholder="Price (PKR)">
-            <input type="text" id="newSuitDesc" placeholder="Description">
+    <div id="uploadForm">
+        <h2>Add New Suit</h2>
+
+        <!-- Suit Details -->
+        <input type="text" id="newSuitName" placeholder="Suit Name">
+        <input type="number" id="newSuitPrice" placeholder="Price (PKR)">
+        <input type="text" id="newSuitDesc" placeholder="Description">
+
+        <!-- File Input for Images -->
+        <label>Upload Images (Multiple allowed):
             <input type="file" id="newSuitImages" multiple accept="image/*">
-            <button onclick="submitNewSuit()">Add Suit</button>
-        </div>
-    </section>
+        </label>
+
+        <!-- Preview Uploaded Images -->
+        <div id="imagePreview" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;"></div>
+
+        <!-- Submit Button -->
+        <button onclick="submitNewSuit()">Add Suit</button>
+    </div>
+</section>
+
 
     <section id="adminDashboard" style="display:none;">
         <h2>Admin Dashboard</h2>
